@@ -1,0 +1,6 @@
+---
+title: "Two-Parameters"
+author: Naveed Ahmad
+format: html
+---
+
