@@ -2,5 +2,85 @@
 title: "Two-Parameters"
 author: Naveed Ahmad
 format: html
+execute: 
+  echo: false
 ---
+
+```{r }
+#| message: false
+library(tidyverse)
+library(primer.data)
+library(tidymodels)
+library(broom)
+library(marginaleffects)
+library(knitr)
+```
+
+```{r}
+#| message: false
+#| results: 'hide'
+set.seed(10)
+
+x <- nhanes |>
+  filter(age >= 18 & age <= 27) |>
+  select(height, sex) |>
+  drop_na() |>
+  slice_sample(n = 50) 
+
+fit_height <- linear_reg() |>
+  set_engine("lm") |>
+  fit(height ~ sex, data = x)
+
+tidy(fit_height, conf.int = TRUE)
+
+```
+
+```{r}
+
+model_tbl <- tibble::tibble(
+  term = c("(Intercept)", "sexMale"),
+  estimate = c(162.00, 15.9),
+  std.error = c(1.22, 1.80),
+  statistic = c(133, 8.85),
+  p.value = c(2.98e-63, 1.18e-11),
+  conf.low = c(160, 12.3),
+  conf.high = c(165, 19.6)
+)
+
+kable(model_tbl, digits = 2, caption = "Fitted Model Coefficients")
+
+```
+
+
+
+Height of people is not exactly the same. Using data from NHNE Survey conducted during 2009 to 2011 by the Center for Diseases Control and Prevention (CDCP), we will predict the average height of USMC recruits for future. The analysis shows that average height of female will be 162 cm and male will be more than it by approximately 16cm with confidence at 95%.
+
+$$
+Y = \beta_0 + \beta_1 X_1 + \cdots + \beta_k X_k + \varepsilon
+$$
+
+$$
+\hat{\text{height}} = 162.18 + 15.94 \cdot \text{sex}_{\text{Male}}
+$$
+
+
+```{r}
+# Generate predictions and store as a real data frame
+pred_df <- as.data.frame(plot_predictions(fit_height, condition = "sex", draw = FALSE))
+ggplot(pred_df, aes(x = sex, y = estimate, fill = sex)) +
+  geom_col(width = 0.6, alpha = 0.8) +
+  geom_errorbar(aes(ymin = conf.low, ymax = conf.high), width = 0.2, linewidth = 0.8) +
+  scale_fill_brewer(palette = "Set2") +
+  labs(
+    title = "Predicted Height by Sex (NHANES, Age 18–27)",
+    subtitle = "Males are predicted to be taller than females by about 16 cm on average.",
+    x = "Sex",
+    y = "Predicted Height (cm)",
+    caption = "Source: NHANES dataset, age 18–27"
+  ) +
+  theme_minimal(base_size = 14) +
+  theme(legend.position = "none")
+
+```
+
 
